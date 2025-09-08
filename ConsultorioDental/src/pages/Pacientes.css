@@ -1,0 +1,437 @@
+/* Contenedor principal */
+.pacientes-container {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Main content */
+.pacientes-main {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header section */
+.pacientes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+}
+
+.pacientes-title-section {
+  flex: 1;
+}
+
+.pacientes-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 0.25rem 0;
+}
+
+.pacientes-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Stats cards */
+.pacientes-stats-container {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.pacientes-stat-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  min-width: 140px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.pacientes-stat-card.total {
+  border-left: 4px solid #8b5cf6;
+}
+
+.pacientes-stat-card.activos {
+  border-left: 4px solid #22c55e;
+}
+
+.pacientes-stat-card.inactivos {
+  border-left: 4px solid #f59e0b;
+}
+
+.pacientes-stat-card.consultas {
+  border-left: 4px solid #3b82f6;
+}
+
+.pacientes-stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  line-height: 1;
+}
+
+.pacientes-stat-card.total .pacientes-stat-number {
+  color: #8b5cf6;
+}
+
+.pacientes-stat-card.activos .pacientes-stat-number {
+  color: #22c55e;
+}
+
+.pacientes-stat-card.inactivos .pacientes-stat-number {
+  color: #f59e0b;
+}
+
+.pacientes-stat-card.consultas .pacientes-stat-number {
+  color: #3b82f6;
+}
+
+.pacientes-stat-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Filter section */
+.pacientes-filter-section {
+  margin-bottom: 1.5rem;
+}
+
+.pacientes-filter-label {
+  font-size: 0.875rem;
+  color: #374151;
+  margin-right: 0.5rem;
+}
+
+.pacientes-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background-color: white;
+  color: #374151;
+  cursor: pointer;
+}
+
+.pacientes-select:focus {
+  outline: none;
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+/* List title */
+.pacientes-list-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+/* Cards container */
+.pacientes-cards-container {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Loading and empty states */
+.pacientes-loading,
+.pacientes-empty {
+  color: #6b7280;
+  padding: 2rem;
+  text-align: center;
+  width: 100%;
+}
+
+/* Cards */
+.pacientes-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 1.25rem;
+  width: 320px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+}
+
+.pacientes-card.activo {
+  background-color: #f0fdf4;
+  border-left: 4px solid #22c55e;
+}
+
+.pacientes-card.inactivo {
+  background-color: #fffbeb;
+  border-left: 4px solid #f59e0b;
+}
+
+.pacientes-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.pacientes-patient-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.pacientes-status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.pacientes-status-badge.activo {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.pacientes-status-badge.inactivo {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.pacientes-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.pacientes-info-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.pacientes-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* Card actions */
+.pacientes-card-actions {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.pacientes-historial-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background-color: #8b5cf6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.pacientes-historial-btn:hover {
+  background-color: #7c3aed;
+}
+
+.pacientes-btn-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Modal */
+.pacientes-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+.pacientes-modal-form {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  min-width: 500px;
+  max-width: 600px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  max-height: 90vh;
+  overflow-y: auto;
+  margin: 2rem;
+}
+
+.pacientes-modal-title {
+  margin-bottom: 1.5rem;
+  color: #1f2937;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border-bottom: 2px solid #8b5cf6;
+  padding-bottom: 0.5rem;
+}
+
+.pacientes-form-group {
+  margin-bottom: 1rem;
+}
+
+.pacientes-form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.pacientes-form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #374151;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.pacientes-form-input:focus {
+  outline: none;
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.pacientes-form-textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #374151;
+  resize: vertical;
+  box-sizing: border-box;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.pacientes-form-textarea:focus {
+  outline: none;
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.pacientes-form-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.pacientes-cancel-button {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background-color: white;
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.pacientes-cancel-button:hover {
+  background-color: #f9fafb;
+}
+
+.pacientes-save-button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  background-color: #8b5cf6;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.pacientes-save-button:hover {
+  background-color: #7c3aed;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .pacientes-main {
+    padding: 1rem;
+  }
+  
+  .pacientes-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  
+  .pacientes-stats-container {
+    flex-wrap: wrap;
+  }
+  
+  .pacientes-stat-card {
+    min-width: calc(50% - 0.5rem);
+  }
+  
+  .pacientes-cards-container {
+    flex-direction: column;
+  }
+  
+  .pacientes-card {
+    width: 100%;
+  }
+  
+  .pacientes-modal-form {
+    margin: 1rem;
+    min-width: unset;
+    max-width: calc(100vw - 2rem);
+  }
+}
+
+@media (max-width: 480px) {
+  .pacientes-stat-card {
+    min-width: 100%;
+  }
+  
+  .pacientes-form-buttons {
+    flex-direction: column;
+  }
+  
+  .pacientes-cancel-button,
+  .pacientes-save-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
