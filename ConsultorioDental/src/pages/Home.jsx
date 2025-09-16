@@ -4,7 +4,6 @@ import Header from './Header';
 export default function Home() {
     return (
         <div className="main-bg">
-            <Header />
             <div className="center-card enhanced-card">
                 <div className="icon-circle">
                     <span role="img" aria-label="dental" className="dental-icon">🦷</span>
