@@ -1,7 +1,12 @@
 import express from 'express';
-import pacientesRoutes from './routes/pacientes.routes.js';
+import cors from 'cors';
+import doctoresRoutes from './routes/doctores.routes.js';
 
 const app = express();
-app.use(pacientesRoutes);
+
+app.use(cors());          
+app.use(express.json());  
+
+app.use('/api', doctoresRoutes);
 
 export default app;
