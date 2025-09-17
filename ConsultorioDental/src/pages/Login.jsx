@@ -21,15 +21,15 @@ export default function Login() {
             });
 
             if (res.data.success) {
-                // Guardar sesión (ej. localStorage)
+                // Guardar sesión (localStorage)
                 localStorage.setItem("doctor", JSON.stringify(res.data.doctor));
                 navigate("/citas");
             } else {
                 setError("Credenciales incorrectas");
             }
         } catch (err) {
-            setError("Error al conectar con el servidor");
-            console.error(err);
+            setError("Correo o contraseña incorrectos");
+            console.error("Error detallado:", err.response || err.message);
         }
     };
 
