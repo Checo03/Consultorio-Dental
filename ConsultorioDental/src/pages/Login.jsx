@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import axios from 'axios';
 import './Login.css';
-import Header from './Header';
 import Citas from './Citas';
 
 export default function Login() {

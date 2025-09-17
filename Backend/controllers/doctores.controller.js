@@ -1,6 +1,12 @@
 // doctores.controller.js
 import { getConnection } from '../database/connection.js';
 
+export const getDoctores = async (req, res) => {
+    const pool = await getConnection();
+    const result = await pool.request().query('SELECT * FROM Doctores');
+    res.json(result.recordset);
+};
+
 export const loginDoctor = async (req, res) => {
     const { username, password } = req.body;
 
