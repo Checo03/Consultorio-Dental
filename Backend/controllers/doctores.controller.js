@@ -15,7 +15,7 @@ export const loginDoctor = async (req, res) => {
         const result = await pool.request()
             .input("username", username)
             .input("password", password)
-            .query("SELECT * FROM Doctores WHERE username = @username AND password = @password");
+            .query("SELECT * FROM Doctores WHERE Correo = @username AND Contrasena = @password");
 
         if (result.recordset.length > 0) {
             res.json({ success: true, doctor: result.recordset[0] });
