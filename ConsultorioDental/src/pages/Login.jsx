@@ -3,6 +3,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import './Login.css';
 import Citas from './Citas';
+import Header from './Header';
 
 export default function Login() {
     const navigate = useNavigate();
@@ -35,6 +36,7 @@ export default function Login() {
 
     return (
         <div>
+            <Header />
             <div className="login-bg">
                 <div className="login-card">
                     <div style={{display:'flex', flexDirection:'column', alignItems:'center', marginBottom:'1.2rem', zIndex:1}}>
@@ -49,7 +51,7 @@ export default function Login() {
                                 type="text" 
                                 id="username" 
                                 name="username"
-                                placeholder="Ingresa tu usuario"
+                                placeholder="Ingresa tu correo"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 autoComplete="username" 

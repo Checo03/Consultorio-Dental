@@ -7,6 +7,7 @@ import Header from "./pages/Header";
 import Citas from "./pages/Citas";
 import Login from "./pages/Login";
 import Pacientes from "./pages/Pacientes";
+import Calendario from './pages/Calendario';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/citas" element={<Citas />} />
         <Route path="/pacientes" element={<Pacientes />} />
+        <Route path="/calendario" element={<Calendario />} />
       </Routes>
     </div>
   );
