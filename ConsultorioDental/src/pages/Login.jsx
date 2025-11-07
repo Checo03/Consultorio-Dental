@@ -24,7 +24,7 @@ export default function Login() {
             if (res.data.success) {
                 // Guardar sesión (localStorage)
                 localStorage.setItem("doctor", JSON.stringify(res.data.doctor));
-                navigate("/citas");
+                navigate("/calendario");
             } else {
                 setError("Credenciales incorrectas");
             }
@@ -36,7 +36,6 @@ export default function Login() {
 
     return (
         <div>
-            <Header />
             <div className="login-bg">
                 <div className="login-card">
                     <div style={{display:'flex', flexDirection:'column', alignItems:'center', marginBottom:'1.2rem', zIndex:1}}>

@@ -6,4 +6,5 @@ const router = Router();
 router.get('/doctores', getDoctores);
 router.post('/login', loginDoctor);
 
+
 export default router;

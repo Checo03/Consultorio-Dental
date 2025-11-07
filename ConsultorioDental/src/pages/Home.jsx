@@ -5,11 +5,9 @@ import Header from './Header';
 export default function Home() {
   return (
     <>
-      <Header />
       <div className="hero-container">
         <div className="professional-card">
           
-          {/* Icono principal */}
           <div className="icon-wrapper">
             <svg className="dental-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="50" cy="50" r="45" fill="url(#gradient1)"/>
@@ -43,13 +41,6 @@ export default function Home() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
           </button>
-
-          {/* Indicadores de características */}
-          <div className="features-indicators">
-            <div className="feature-dot"></div>
-            <div className="feature-dot active"></div>
-            <div className="feature-dot"></div>
-          </div>
         </div>
 
         {/* Elementos decorativos de fondo */}

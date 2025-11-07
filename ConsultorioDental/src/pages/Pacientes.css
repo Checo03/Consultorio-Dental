@@ -65,6 +65,7 @@
   display: flex;
   gap: 1rem;
   margin-bottom: 2rem;
+  justify-content: center;
 }
 
 .pacientes-stat-card {
@@ -192,6 +193,8 @@
   display: flex;
   flex-direction: column;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  margin-right: 30px;
+  margin-bottom: 20px;
 }
 
 .pacientes-card:hover {
@@ -610,4 +613,9 @@
   .pacientes-form-grid {
     padding: 1rem;
   }
+}
+
+.pacientes-historial-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
 }

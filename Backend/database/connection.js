@@ -1,8 +1,8 @@
 import sql from "mssql";
 
 const dbSettings = {
-    user: "admin",
-    password: "123456789",
+    user: "Dev",
+    password: "123456",
     server: "localhost", 
     database: "SistemaDental",
     options: {
@@ -22,3 +22,5 @@ export async function getConnection() {
         console.log("Error de conexión a la base de datos");
     }
 }
+
+export { sql };

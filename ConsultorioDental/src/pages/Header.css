@@ -410,3 +410,40 @@
     backdrop-filter: blur(20px);
   }
 }
+
+.header-user {
+    position: relative; 
+    cursor: pointer; 
+}
+
+.dropdown-menu {
+    position: absolute; 
+    right: 0; 
+    top: 100%; 
+    z-index: 100; 
+    padding: 5px;
+    background: rgba(102, 126, 234, 0.9);
+    border-radius: 15px;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 180px;
+    margin-top: 8px; 
+}
+
+.dropdown-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.dropdown-menu ul li {
+    padding: 10px 15px;
+    font-size: 14px;
+    color: #fff;
+    transition: background-color 0.2s; /* Suaviza el efecto hover */
+    cursor: pointer; /* Muestra que es interactivo */
+}
+
+.dropdown-menu ul li:hover {
+    color: rgba(255, 255, 255, 0.384); 
+}

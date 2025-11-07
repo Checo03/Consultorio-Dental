@@ -1,5 +1,5 @@
-
 import React, { useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import { Link, useLocation } from "react-router-dom";
 import Home from "./Home";
 import Login from "./Login";
@@ -9,6 +9,29 @@ import './Header.css';
 
 
 export default function Header() {
+    // Obtener datos del doctor desde el localStorage
+    const doctorString = localStorage.getItem("doctor");
+    if (doctorString) {
+        const doctor = JSON.parse(doctorString);
+        const userNameElement = document.querySelector(".user-name");
+
+        if (userNameElement && doctor.Nombre) {
+            userNameElement.textContent = "Dr. " + doctor.Nombre + " " + doctor.ApPaterno;
+                        
+        }
+    }
+
+    // Estado para el menú desplegable de usuario
+    const [isOpen, setIsOpen] = useState(false);
+    const navigate = useNavigate();
+    const toggleDropdown = () => {
+        setIsOpen(!isOpen);
+    };
+    const handleLogout = () => {
+        localStorage.removeItem("doctor");
+        navigate('/login');
+    };
+
     const location = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -24,7 +47,7 @@ export default function Header() {
         <header className="header">
             <div className="header-content">
                 {/* Logo y título */}
-                <Link to="/" className="header-logo">
+                <Link to="/calendario" className="header-logo">
                     <div className="logo-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
@@ -41,8 +64,8 @@ export default function Header() {
                 {/* Navegación principal */}
                 <nav className={`header-nav ${isMenuOpen ? 'nav-open' : ''}`}>
                     <Link 
-                        to="/" 
-                        className={`nav-link ${isActive('/') ? 'nav-link-active' : ''}`}
+                        to="/calendario" 
+                        className={`nav-link ${isActive('/calendario') ? 'nav-link-active' : ''}`}
                         onClick={() => setIsMenuOpen(false)}
                     >
                         <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -82,7 +105,7 @@ export default function Header() {
                 {/* Sección de usuario */}
                 <div className="header-user">
                     
-                    <div className="user-profile">
+                    <div className="user-profile" onClick={toggleDropdown}>
                         <div className="user-avatar">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -90,7 +113,7 @@ export default function Header() {
                             </svg>
                         </div>
                         <div className="user-info">
-                            <span className="user-name">Dr. Juan Pérez</span>
+                            <span className="user-name"> </span>
                             <span className="user-role">Dentista</span>
                         </div>
                         <div className="user-dropdown">
@@ -99,6 +122,13 @@ export default function Header() {
                             </svg>
                         </div>
                     </div>
+                    {isOpen && (
+                        <div className="dropdown-menu"> 
+                            <ul>
+                                <li onClick={handleLogout}>Cerrar Sesión</li> 
+                            </ul>
+                        </div>
+                    )}
                 </div>
 
                 {/* Botón de menú móvil */}
