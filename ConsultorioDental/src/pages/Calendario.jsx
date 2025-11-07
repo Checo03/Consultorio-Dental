@@ -1,156 +1,57 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import './Calendario.css';
 import Header from './Header';
 
+
+// Función auxiliar para formatear la fecha a 'YYYY-MM-DD' para la API
+const formatDateForAPI = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function Calendario() {
-  const [currentDate, setCurrentDate] = useState(new Date(2024, 8, 1)); // Septiembre 2024
+  const [currentDate, setCurrentDate] = useState(new Date()); 
   const [selectedDate, setSelectedDate] = useState(null);
+  const [citas, setCitas] = useState([]); 
+  const [loading, setLoading] = useState(true); 
+  const [error, setError] = useState(null); 
 
-  // Datos de ejemplo para septiembre 2024 - MÁS CITAS
-  const citasEjemplo = [
-    // Septiembre 2024
-    { 
-      ID: 1, 
-      Estado: 'PROGRAMADA', 
-      Paciente: 'María González', 
-      Fecha: '2024-09-02', 
-      Hora: '10:00', 
-      Motivo: 'Consulta general',
-      Prioridad: 'normal'
-    },
-    { 
-      ID: 2, 
-      Estado: 'COMPLETADA', 
-      Paciente: 'Juan Pérez', 
-      Fecha: '2024-09-02', 
-      Hora: '14:30', 
-      Motivo: 'Revisión médica',
-      Prioridad: 'normal'
-    },
-    { 
-      ID: 3, 
-      Estado: 'PROGRAMADA', 
-      Paciente: 'Ana Rodríguez', 
-      Fecha: '2024-09-05', 
-      Hora: '09:15', 
-      Motivo: 'Seguimiento',
-      Prioridad: 'urgente'
-    },
-    { 
-      ID: 4, 
-      Estado: 'PROGRAMADA', 
-      Paciente: 'Carlos Martínez', 
-      Fecha: '2024-09-07', 
-      Hora: '11:30', 
-      Motivo: 'Chequeo preventivo',
-      Prioridad: 'normal'
-    },
-    { 
-      ID: 5, 
-      Estado: 'PROGRAMADA', 
-      Paciente: 'Laura Sánchez', 
-      Fecha: '2024-09-10', 
-      Hora: '16:00', 
-      Motivo: 'Urgencia',
-      Prioridad: 'emergencia'
-    },
-    { 
-      ID: 6, 
-      Estado: 'PROGRAMADA', 
-      Paciente: 'Pedro López', 
-      Fecha: '2024-09-12', 
-      Hora: '08:30', 
-      Motivo: 'Consulta especializada',
-      Prioridad: 'normal'
-    },
-    { 
-      ID: 7, 
-      Estado: 'COMPLETADA', 
-      Paciente: 'Elena Vázquez', 
-      Fecha: '2024-09-12', 
-      Hora: '15:00', 
-      Motivo: 'Resultados de estudios',
-      Prioridad: 'normal'
-    },
-    { 
-      ID: 8, 
-      Estado: 'PROGRAMADA', 
-      Paciente: 'Roberto Silva', 
-      Fecha: '2024-09-15', 
-      Hora: '10:45', 
-      Motivo: 'Consulta cardiología',
-      Prioridad: 'urgente'
-    },
-    { 
-      ID: 9, 
-      Estado: 'PROGRAMADA', 
-      Paciente: 'Carmen López', 
-      Fecha: '2024-09-18', 
-      Hora: '12:30', 
-      Motivo: 'Chequeo anual',
-      Prioridad: 'normal'
-    },
-    { 
-      ID: 10, 
-      Estado: 'PROGRAMADA', 
-      Paciente: 'Miguel Torres', 
-      Fecha: '2024-09-20', 
-      Hora: '17:15', 
-      Motivo: 'Consulta urgente',
-      Prioridad: 'emergencia'
-    },
-    { 
-      ID: 11, 
-      Estado: 'PROGRAMADA', 
-      Paciente: 'Sofia Herrera', 
-      Fecha: '2024-09-23', 
-      Hora: '09:00', 
-      Motivo: 'Control rutinario',
-      Prioridad: 'normal'
-    },
-    { 
-      ID: 12, 
-      Estado: 'COMPLETADA', 
-      Paciente: 'Diego Morales', 
-      Fecha: '2024-09-25', 
-      Hora: '11:15', 
-      Motivo: 'Seguimiento postoperatorio',
-      Prioridad: 'urgente'
-    },
-    { 
-      ID: 13, 
-      Estado: 'PROGRAMADA', 
-      Paciente: 'Lucia Fernández', 
-      Fecha: '2024-09-26', 
-      Hora: '14:00', 
-      Motivo: 'Consulta dermatológica',
-      Prioridad: 'normal'
-    },
-    { 
-      ID: 14, 
-      Estado: 'PROGRAMADA', 
-      Paciente: 'Ricardo Jiménez', 
-      Fecha: '2024-09-28', 
-      Hora: '16:30', 
-      Motivo: 'Revisión neurológica',
-      Prioridad: 'urgente'
-    },
-    { 
-      ID: 15, 
-      Estado: 'PROGRAMADA', 
-      Paciente: 'Isabel Castro', 
-      Fecha: '2024-09-30', 
-      Hora: '10:00', 
-      Motivo: 'Consulta ginecológica',
-      Prioridad: 'normal'
+  useEffect(() => {
+    setSelectedDate(new Date()); 
+    fetchCitas();
+  }, [currentDate]); 
+
+  const fetchCitas = async () => {
+    setLoading(true);
+    setError(null);
+
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const startDate = formatDateForAPI(new Date(year, month, 1));
+    const endDate = formatDateForAPI(new Date(year, month + 1, 0)); 
+
+    try {
+      const response = await axios.get("http://localhost:4000/api/citas", {
+        params: {
+          start_date: startDate,
+          end_date: endDate
+        }
+      });
+      
+      setCitas(response.data); 
+
+    } catch (err) {
+      console.error("Fallo al obtener citas:", err);
+      setError(err.message); 
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  const months = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-  ];
-
+  const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
   const daysOfWeek = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
   const getDaysInMonth = (date) => {
@@ -163,31 +64,32 @@ export default function Calendario() {
 
     const days = [];
     
-    // Días del mes anterior
-    for (let i = startingDayOfWeek - 1; i >= 0; i--) {
-      const prevDate = new Date(year, month, -i);
-      days.push({ date: prevDate, isCurrentMonth: false });
-    }
-    
-    // Días del mes actual
     for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, month, day);
-      days.push({ date, isCurrentMonth: true });
+        const date = new Date(Date.UTC(year, month, day));
+        days.push({ date, isCurrentMonth: true });
     }
-    
-    // Días del siguiente mes para completar la grilla
+    for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+        const prevDate = new Date(Date.UTC(year, month, -i));  
+        days.push({ date: prevDate, isCurrentMonth: false });
+    }
     const remainingDays = 42 - days.length;
     for (let day = 1; day <= remainingDays; day++) {
-      const nextDate = new Date(year, month + 1, day);
-      days.push({ date: nextDate, isCurrentMonth: false });
+        const nextDate = new Date(Date.UTC(year, month + 1, day));
+        days.push({ date: nextDate, isCurrentMonth: false });
     }
     
     return days;
   };
 
   const getCitasForDate = (date) => {
-    const dateStr = date.toISOString().split('T')[0];
-    return citasEjemplo.filter(cita => cita.Fecha === dateStr);
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    
+    return citas.filter(cita => {
+        return cita.Fecha === dateStr;
+    });
   };
 
   const navigateMonth = (direction) => {
@@ -196,6 +98,7 @@ export default function Calendario() {
       newDate.setMonth(prev.getMonth() + direction);
       return newDate;
     });
+    setSelectedDate(null); 
   };
 
   const goToToday = () => {
@@ -203,25 +106,75 @@ export default function Calendario() {
     setSelectedDate(new Date());
   };
 
-  const handleDateClick = (date) => {
-    if (!date.isCurrentMonth) return;
-    setSelectedDate(date.date);
+  const handleDateClick = (dayObj) => {
+    if (!dayObj.isCurrentMonth) return;
+    setSelectedDate(dayObj.date);
   };
 
   const formatSelectedDate = (date) => {
     const days = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
     const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
     
-    const dayName = days[date.getDay()];
-    const day = date.getDate();
-    const month = months[date.getMonth()];
-    const year = date.getFullYear();
+    const dayName = days[date.getUTCDay()];
+    const day = date.getUTCDate();
+    const month = months[date.getUTCMonth()];
+    const year = date.getUTCFullYear();
     
     return `${dayName}, ${day} de ${month} de ${year}`;
   };
-
+  
   const days = getDaysInMonth(currentDate);
   const today = new Date();
+  
+  const citasProgramadas = citas.filter(c => c.Estado === 1).length; 
+  const citasCompletadas = citas.filter(c => c.Estado === 2).length; 
+  const citasEmergencia = citas.filter(c => c.Estado === 3).length;
+
+
+  if (loading) {
+    return <div className="loading-container">Cargando citas...</div>;
+  }
+
+  if (error) {
+    return <div className="error-container">Error al conectar con la base de datos: **{error}**. Verifica la consola para más detalles.</div>;
+  }
+
+  const getPrioridadClass = (prioridadCode) => {
+    switch (prioridadCode) {
+        case 1:
+            return 'normal';
+        case 2:
+            return 'urgente';
+        case 3:
+            return 'emergencia';
+        default:
+            return 'normal'; 
+    }
+  };
+  const getEstadoClass = (estadoCode) => {
+    switch (estadoCode) {
+        case 1:
+            return 'programada';
+        case 2:
+            return 'completada';
+        case 3:
+            return 'cancelada';
+        default:
+            return 'programada'; 
+    }
+  };
+  const mapEstado = (estadoNum) => {
+    switch (estadoNum) {
+        case 1:
+            return { text: 'PROGRAMADA', className: 'programada' };
+        case 2:
+            return { text: 'COMPLETADA', className: 'completada' };
+        case 3:
+            return { text: 'CANCELADA', className: 'cancelada' };
+        default:
+            return { text: 'Desconocido', className: 'desconocido' };
+    }
+  };
 
   return (
     <div className="calendario-container">
@@ -244,16 +197,16 @@ export default function Calendario() {
           </div>
           <div className="calendario-header-stats">
             <div className="calendario-stat-mini">
-              <span className="stat-number">{citasEjemplo.filter(c => c.Estado === 'PROGRAMADA').length}</span>
+              <span className="stat-number">{citasProgramadas}</span>
               <span className="stat-label">Programadas</span>
             </div>
             <div className="calendario-stat-mini">
-              <span className="stat-number">{citasEjemplo.filter(c => c.Estado === 'COMPLETADA').length}</span>
+              <span className="stat-number">{citasCompletadas}</span>
               <span className="stat-label">Completadas</span>
             </div>
             <div className="calendario-stat-mini">
-              <span className="stat-number">{citasEjemplo.filter(c => c.Prioridad === 'emergencia').length}</span>
-              <span className="stat-label">Emergencias</span>
+              <span className="stat-number">{citasEmergencia}</span>
+              <span className="stat-label">Canceladas</span>
             </div>
           </div>
           <div className="calendario-actions">
@@ -267,17 +220,8 @@ export default function Calendario() {
               Hoy
             </button>
             <button 
-              className="calendario-nueva-btn"
-              onClick={() => alert('Crear nueva cita')}
-            >
-              <svg className="calendario-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Nueva Cita
-            </button>
-            <button 
               className="calendario-volver-btn"
-              onClick={() => window.history.back()}
+              onClick={() => window.location.reload()}
             >
               <svg className="calendario-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -344,7 +288,7 @@ export default function Calendario() {
                           {citasDelDia.slice(0, 3).map((cita, i) => (
                             <div
                               key={i}
-                              className={`calendario-cita-mini ${cita.Estado.toLowerCase()} ${cita.Prioridad}`}
+                              className={`calendario-cita-mini ${getEstadoClass(cita.Estado)} ${getPrioridadClass(cita.Prioridad)}`}
                             >
                               <span className="cita-hora">{cita.Hora}</span>
                               <span className="cita-paciente">{cita.Paciente.split(' ')[0]}</span>
@@ -366,54 +310,66 @@ export default function Calendario() {
             {/* Panel lateral para detalles */}
             {selectedDate && (
               <div className="calendario-sidebar">
-                <h3 className="calendario-sidebar-title">
-                  {formatSelectedDate(selectedDate)}
-                </h3>
-                
-                {getCitasForDate(selectedDate).length === 0 ? (
-                  <div className="calendario-no-citas">
-                    <svg className="calendario-no-citas-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <p>No hay citas programadas para este día</p>
-                    <button className="add-cita-btn">
-                      <svg className="calendario-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                      Agregar Cita
-                    </button>
-                  </div>
-                ) : (
-                  <div className="calendario-citas-list">
-                    {getCitasForDate(selectedDate).map(cita => (
-                      <div key={cita.ID} className={`calendario-cita-item ${cita.Estado.toLowerCase()}`}>
-                        <div className="calendario-cita-header">
-                          <div className="calendario-cita-time">
-                            <svg className="calendario-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            {cita.Hora}
-                          </div>
-                          <div className={`calendario-cita-priority ${cita.Prioridad}`}>
-                            {cita.Prioridad === 'emergencia' && '🚨'}
-                            {cita.Prioridad === 'urgente' && '⚠️'}
-                            {cita.Prioridad === 'normal' && '📋'}
-                          </div>
-                        </div>
-                        <div className="calendario-cita-patient">{cita.Paciente}</div>
-                        <div className="calendario-cita-motivo">{cita.Motivo}</div>
-                        <div className={`calendario-cita-status ${cita.Estado.toLowerCase()}`}>
-                          {cita.Estado}
-                        </div>
-                        <div className="calendario-cita-actions">
-                          <button className="cita-action-btn edit">Editar</button>
-                          <button className="cita-action-btn complete">Completar</button>
-                          <button className="cita-action-btn cancel">Cancelar</button>
-                        </div>
+                  <h3 className="calendario-sidebar-title">
+                      {formatSelectedDate(selectedDate)}
+                  </h3>
+                  
+                  {getCitasForDate(selectedDate).length === 0 ? (
+                      <div className="calendario-no-citas">
+                          <svg className="calendario-no-citas-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <p>No hay citas programadas para este día</p>
+                          <button 
+                              className="add-cita-btn"
+                              onClick={() => window.location.href = '/citas'}
+                          >
+                              <svg className="calendario-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                              </svg>
+                              Agregar Cita
+                          </button>
                       </div>
-                    ))}
-                  </div>
-                )}
+                  ) : (
+                      <div className="calendario-citas-list">
+                          {getCitasForDate(selectedDate).map(cita => {
+                              const estadoMapeado = mapEstado(cita.Estado);
+
+                              return (
+                                  <div 
+                                      key={cita.ID} 
+                                      className={`calendario-cita-item ${estadoMapeado.className}`} 
+                                  >
+                                      <div className="calendario-cita-header">
+                                          <div className="calendario-cita-time">
+                                              <svg className="calendario-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                              </svg>
+                                              {cita.Hora}
+                                          </div>
+                                          <div className={`calendario-cita-priority ${getPrioridadClass(cita.Prioridad)}`}>
+                                              {cita.Prioridad === 3 && '🚨'}
+                                              {cita.Prioridad === 2 && '⚠️'}
+                                              {cita.Prioridad === 1 && '📋'}
+                                          </div>
+                                      </div>
+                                      <div className="calendario-cita-patient">{cita.Paciente}</div>
+                                      <div className="calendario-cita-motivo">{cita.Motivo}</div>
+                                      
+                                      <div className={`calendario-cita-status ${estadoMapeado.className}`}>
+                                          {estadoMapeado.text} 
+                                      </div>
+                                      
+                                      <div className="calendario-cita-actions">
+                                          <button className="cita-action-btn edit">Editar</button>
+                                          <button className="cita-action-btn complete">Completar</button>
+                                          <button className="cita-action-btn cancel">Cancelar</button>
+                                      </div>
+                                  </div>
+                              );
+                          })}
+                      </div>
+                  )}
               </div>
             )}
           </div>

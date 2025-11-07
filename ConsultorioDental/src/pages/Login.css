@@ -23,6 +23,7 @@
   z-index: 10;
   transform: translateY(-10px);
   animation: fadeInUp 0.8s ease-out;
+  margin-top: 15px;
 }
 
 .login-card::before {
