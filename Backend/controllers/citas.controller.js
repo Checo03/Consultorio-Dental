@@ -93,3 +93,39 @@ export const crearCita = async (req, res) => {
         });
     } 
 };
+
+export const updateCitaEstado = async (req, res) => {
+    const { ID, Estado } = req.body;
+
+    if (!ID || Estado === undefined) {
+        return res.status(400).json({ 
+            message: 'Faltan parámetros obligatorios: ID de la cita y el nuevo Estado.' 
+        });
+    }
+
+    let pool;
+    try {
+        pool = await getConnection();
+        const request = pool.request();
+        
+        request.input('CitaID', sql.Int, ID); 
+        request.input('NuevoEstado', sql.Int, Estado);
+        
+        const result = await request.execute('sp_ActualizarEstadoCita');
+        
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).json({ message: `No se encontró la cita con ID ${ID} o no se pudo actualizar.` });
+        }        
+        res.status(200).json({ 
+            message: `Cita ${ID} actualizada a estado ${Estado} correctamente.`,
+            newEstado: Estado
+        });
+        
+    } catch (err) {
+        console.error(`Error al actualizar el estado de la cita ${ID}:`, err);
+        res.status(500).json({ 
+            message: 'Error en el servidor al actualizar el estado de la cita.', 
+            error: err.message 
+        });
+    } 
+};
