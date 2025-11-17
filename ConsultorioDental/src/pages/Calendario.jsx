@@ -3,15 +3,6 @@ import axios from 'axios';
 import './Calendario.css';
 import Header from './Header';
 
-
-// Función auxiliar para formatear la fecha a 'YYYY-MM-DD' para la API
-const formatDateForAPI = (date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
 export default function Calendario() {
   const [currentDate, setCurrentDate] = useState(new Date()); 
   const [selectedDate, setSelectedDate] = useState(null);
@@ -23,6 +14,36 @@ export default function Calendario() {
     setSelectedDate(new Date()); 
     fetchCitas();
   }, [currentDate]); 
+
+  const updateCitaStatus = async (citaID, newStatus) => {
+    let actionText = '';
+    if (newStatus === 2) {
+        actionText = '¿Estás seguro de que deseas MARCAR esta cita como COMPLETADA?';
+    } else if (newStatus === 3) {
+        actionText = '¿Estás seguro de que deseas CANCELAR esta cita? Esta acción no se puede deshacer.';
+    } else {
+        return; 
+    }
+
+    if (!window.confirm(actionText)) {
+        // Si el usuario presiona "Cancelar" o cierra el diálogo, salir de la función
+        return;
+    }
+    
+    try {
+        const response = await axios.post("http://localhost:4000/api/citasEstado", {
+            ID: citaID,       
+            Estado: newStatus 
+        });
+
+        console.log(`Cita ${citaID} actualizada a estado ${newStatus}`, response.data);
+        fetchCitas(); 
+
+    } catch (err) {
+        console.error("Fallo al actualizar el estado de la cita:", err);
+        alert("Error al actualizar la cita. Verifique la conexión con el servidor.");
+    }
+  };
 
   const fetchCitas = async () => {
     setLoading(true);
@@ -58,37 +79,60 @@ export default function Calendario() {
     const year = date.getFullYear();
     const month = date.getMonth();
     const firstDay = new Date(year, month, 1);
+    const startingDayOfWeek = firstDay.getDay();
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
 
     const days = [];
     
-    for (let day = 1; day <= daysInMonth; day++) {
-        const date = new Date(Date.UTC(year, month, day));
-        days.push({ date, isCurrentMonth: true });
-    }
-    for (let i = startingDayOfWeek - 1; i >= 0; i--) {
-        const prevDate = new Date(Date.UTC(year, month, -i));  
+    for (let i = 0; i < startingDayOfWeek; i++) {
+        const prevDate = new Date(year, month, 1 - (startingDayOfWeek - i));
         days.push({ date: prevDate, isCurrentMonth: false });
     }
-    const remainingDays = 42 - days.length;
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        days.push({ date, isCurrentMonth: true });
+    }
+    const totalDaysToShow = 42; 
+    const remainingDays = totalDaysToShow - days.length;
     for (let day = 1; day <= remainingDays; day++) {
-        const nextDate = new Date(Date.UTC(year, month + 1, day));
+        const nextDate = new Date(year, month + 1, day);
         days.push({ date: nextDate, isCurrentMonth: false });
     }
     
     return days;
   };
 
+  const formatTime = (timeStr) => {
+    if (!timeStr) return 'N/A';
+    
+    const [hours, minutes] = timeStr.split(':'); 
+    
+    if (hours === undefined || minutes === undefined) return timeStr;
+
+    let hour = parseInt(hours, 10);
+    const min = minutes;
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    
+    // Conversión a formato de 12 horas
+    hour = hour % 12;
+    hour = hour ? hour : 12;
+    
+    return `${hour}:${min} ${ampm}`;
+  };
+
+  const formatDateForAPI = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
   const getCitasForDate = (date) => {
-    const year = date.getUTCFullYear();
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(date.getUTCDate()).padStart(2, '0');
-    const dateStr = `${year}-${month}-${day}`;
+    const dateStr = formatDateForAPI(date);
     
     return citas.filter(cita => {
-        return cita.Fecha === dateStr;
+        const citaDateStr = cita.Fecha.substring(0, 10);
+        return citaDateStr === dateStr;
     });
   };
 
@@ -108,17 +152,19 @@ export default function Calendario() {
 
   const handleDateClick = (dayObj) => {
     if (!dayObj.isCurrentMonth) return;
-    setSelectedDate(dayObj.date);
+    const cleanDate = new Date(dayObj.date.getFullYear(), dayObj.date.getMonth(), dayObj.date.getDate());
+    setSelectedDate(cleanDate);
   };
+
 
   const formatSelectedDate = (date) => {
     const days = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
     const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
     
-    const dayName = days[date.getUTCDay()];
-    const day = date.getUTCDate();
-    const month = months[date.getUTCMonth()];
-    const year = date.getUTCFullYear();
+    const dayName = days[date.getDay()];
+    const day = date.getDate();
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
     
     return `${dayName}, ${day} de ${month} de ${year}`;
   };
@@ -219,15 +265,6 @@ export default function Calendario() {
               </svg>
               Hoy
             </button>
-            <button 
-              className="calendario-volver-btn"
-              onClick={() => window.location.reload()}
-            >
-              <svg className="calendario-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              Volver
-            </button>
           </div>
         </div>
 
@@ -290,7 +327,7 @@ export default function Calendario() {
                               key={i}
                               className={`calendario-cita-mini ${getEstadoClass(cita.Estado)} ${getPrioridadClass(cita.Prioridad)}`}
                             >
-                              <span className="cita-hora">{cita.Hora}</span>
+                              <span className="cita-hora">{formatTime(cita.Hora)}</span>
                               <span className="cita-paciente">{cita.Paciente.split(' ')[0]}</span>
                             </div>
                           ))}
@@ -345,7 +382,7 @@ export default function Calendario() {
                                               <svg className="calendario-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                               </svg>
-                                              {cita.Hora}
+                                              {formatTime(cita.Hora)}
                                           </div>
                                           <div className={`calendario-cita-priority ${getPrioridadClass(cita.Prioridad)}`}>
                                               {cita.Prioridad === 3 && '🚨'}
@@ -360,11 +397,22 @@ export default function Calendario() {
                                           {estadoMapeado.text} 
                                       </div>
                                       
-                                      <div className="calendario-cita-actions">
-                                          <button className="cita-action-btn edit">Editar</button>
-                                          <button className="cita-action-btn complete">Completar</button>
-                                          <button className="cita-action-btn cancel">Cancelar</button>
-                                      </div>
+                                      <div className="calendario-cita-actions">            
+                                        <button 
+                                            className="cita-action-btn complete"
+                                            onClick={() => updateCitaStatus(cita.ID, 2)}
+                                            disabled={cita.Estado === 2 || cita.Estado === 3} 
+                                        >
+                                            Completar
+                                        </button>                                        
+                                        <button 
+                                            className="cita-action-btn cancel"
+                                            onClick={() => updateCitaStatus(cita.ID, 3)}
+                                            disabled={cita.Estado === 3 || cita.Estado === 2}
+                                        >
+                                            Cancelar
+                                        </button>
+                                    </div>
                                   </div>
                               );
                           })}
