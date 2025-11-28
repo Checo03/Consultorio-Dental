@@ -14,13 +14,22 @@ export default function Pacientes() {
   const [showPacienteForm, setShowPacienteForm] = useState(false);
   const [selectedPaciente, setSelectedPaciente] = useState(null);
   const [filtro, setFiltro] = useState('Todos');
+  const [historialCargado, setHistorialCargado] = useState(null); 
+  const [cargandoHistorial, setCargandoHistorial] = useState(false);
+
   const [historialForm, setHistorialForm] = useState({
-    fecha: new Date().toISOString().split('T')[0],
-    diagnostico: '',
-    tratamiento: '',
-    medicamentos: '',
-    observaciones: '',
-    proximaCita: ''
+    presionArterial: '',
+    Enfermedades: '',
+    origen: '',
+    residencia: '',
+    nacionalidad: '',
+    antecedentesPatologicos: '',
+    antecedentesGinecologicos: '',
+    peso: '',
+    temperatura: '',
+    altura: '',
+    glucosa: '',
+    hallazgosClinicos: '',
   });
   const [pacienteForm, setPacienteForm] = useState({
     nombre: '',
@@ -36,7 +45,7 @@ export default function Pacientes() {
     setError(null);
     try {
       // Petición GET con axios
-      const response = await axios.get("http://localhost:4000/api/pacientes"); 
+      const response = await axios.get(`${API_BASE_URL}/pacientes`); 
       setPacientes(response.data); 
     } catch (err) {
       console.error("Error al obtener pacientes:", err.response?.data || err.message);
@@ -50,45 +59,121 @@ export default function Pacientes() {
     fetchPacientes();
   }, []);
 
-  const handleHistorialSubmit = async (e) => {
-    e.preventDefault();
-    
-    const historialData = {
-        IDPaciente: selectedPaciente.ID,
-        FechaConsulta: historialForm.fecha,
-        Diagnostico: historialForm.diagnostico,
-        Tratamiento: historialForm.tratamiento,
-        Medicamentos: historialForm.medicamentos,
-        Observaciones: historialForm.observaciones,
-        ProximaCita: historialForm.proximaCita || null // Enviar null si está vacío
-    };
+  const doctorString = localStorage.getItem("doctor");
+  const doctor = JSON.parse(doctorString);
 
+  const fillHistorialForm = (data) => {
+    setHistorialForm({
+        presionArterial: data.PresionArterial || '',
+        Enfermedades: data.Enfermedades || '',
+        origen: data.Origen || '',
+        residencia: data.Residencia || '',
+        nacionalidad: data.Nacionalidad || '',
+        antecedentesPatologicos: data.AntecedentesPatologicos || '',
+        antecedentesGinecologicos: data.AntecedentesGinecologicos || '',
+        peso: data.Peso ? String(data.Peso) : '',
+        temperatura: data.Temperatura ? String(data.Temperatura) : '',
+        altura: data.Altura ? String(data.Altura) : '',
+        glucosa: data.Glucosa ? String(data.Glucosa) : '',
+        hallazgosClinicos: data.HallazgosClinicos || '',
+    });
+  };
+
+  const abrirFormularioCreacion = (paciente) => {
+    setSelectedPaciente(paciente);
+    setHistorialCargado(null); // Esto asegura que el modal sepa que es CREACIÓN
+    fillHistorialForm({}); // Limpiar formulario
+    setShowHistorialForm(true);
+  };
+
+
+  const abrirHistorialExistente = async (paciente) => {
+    setSelectedPaciente(paciente);
+    setShowHistorialForm(true);
+    setHistorialCargado(null);
+    fillHistorialForm({}); // Limpiar formulario mientras carga
+
+    setCargandoHistorial(true);
     try {
-        // Petición POST con axios. Axios maneja el Content-Type y el JSON.stringify
-        await axios.post("http://localhost:4000/api/historial", historialData);
-
-        alert('Historial guardado exitosamente. Recargando pacientes...');
-        
-        // Refrescar la lista de pacientes
-        await fetchPacientes();
-        
-        // Resetear el estado del formulario
-        setShowHistorialForm(false);
-        setSelectedPaciente(null);
-        setHistorialForm({
-          fecha: new Date().toISOString().split('T')[0],
-          diagnostico: '', tratamiento: '', medicamentos: '', observaciones: '', proximaCita: ''
+        // Petición usando Query Parameters
+        const response = await axios.get(`${API_BASE_URL}/historial`, {
+             params: { IDPaciente: paciente.ID }
         });
+        
+        const historial = response.data; 
+
+        setHistorialCargado(historial);
+        fillHistorialForm(historial);
 
     } catch (err) {
-        const errorMessage = err.response?.data?.message || err.message;
-        console.error("Error al enviar historial:", err.response || err);
-        alert(`Error al guardar el historial: ${errorMessage}`);
+        if (err.response && (err.response.status === 404 || err.response.status === 400)) {
+            alert("Error: No se encontró el historial. Por favor, use el botón 'Agregar Historial'.");
+        } else {
+            alert("Error grave al intentar conectar para ver el historial.");
+        }
+        setShowHistorialForm(false); 
+        setSelectedPaciente(null); 
+    } finally {
+        setCargandoHistorial(false);
     }
   };
 
-  const doctorString = localStorage.getItem("doctor");
-  const doctor = JSON.parse(doctorString);
+  const handleHistorialSubmit = async (e) => {
+    e.preventDefault();
+    
+    const isUpdate = historialCargado && historialCargado.ID; 
+    
+    const dataToSend = {
+        IDPaciente: selectedPaciente.ID,
+        PresionArterial: historialForm.presionArterial,
+        Enfermedades: historialForm.Enfermedades,
+        Origen: historialForm.origen,
+        Residencia: historialForm.residencia,
+        Nacionalidad: historialForm.nacionalidad,
+        AntecedentesPatologicos: historialForm.antecedentesPatologicos,
+        AntecedentesGinecologicos: historialForm.antecedentesGinecologicos,
+        Peso: parseFloat(historialForm.peso) || null, 
+        Temperatura: parseFloat(historialForm.temperatura) || null,
+        Altura: parseFloat(historialForm.altura) || null,
+        Glucosa: parseFloat(historialForm.glucosa) || null,
+        HallazgosClinicos: historialForm.hallazgosClinicos,
+        IDHistorial: isUpdate ? historialCargado.ID : null
+    };
+
+    try {
+        if (isUpdate) {
+            await axios.post(`${API_BASE_URL}/actualizarHistorial`, dataToSend);
+            alert('Historial actualizado exitosamente.');
+        } else {
+            // Crear nuevo historial (POST)
+            await axios.post(`${API_BASE_URL}/crearHistorial`, dataToSend);
+            alert('Historial guardado exitosamente. Recargando pacientes...');
+        }
+        
+        await fetchPacientes(); 
+        setShowHistorialForm(false);
+        setSelectedPaciente(null);
+        setHistorialCargado(null);
+        fillHistorialForm({}); 
+
+    } catch (err) {
+        const action = isUpdate ? "actualizar" : "guardar";
+        const errorMessage = err.response?.data?.message || err.message;
+        console.error(`Error al ${action} historial:`, err.response || err);
+        alert(`Error al ${action} el historial: ${errorMessage}`);
+    }
+  };
+
+  const pacienteTieneHistorial = (paciente) => {
+    // 1. Fallback seguro
+    if (!paciente) return false; 
+    
+    // 2. Usamos la propiedad que debe venir del backend
+    // Si 'TieneHistorial' es 1, 1 es true. Si es 0 o null, es false.
+    return paciente.TieneHistorial; 
+};
+
+
   const handlePacienteSubmit = async (e) => {
     e.preventDefault();
     
@@ -121,9 +206,8 @@ export default function Pacientes() {
         alert(`Error al crear el paciente: ${errorMessage}`);
     }
   };
-
-  // --- LÓGICA DE FILTRADO Y FUNCIONES AUXILIARES ---
   
+  // Logica de filtrado y busqueda
   const pacientesPorEstado = filtro === 'Todos' 
     ? pacientes 
     : pacientes.filter(p => p.Estado === filtro);
@@ -160,6 +244,7 @@ export default function Pacientes() {
     });
   };
 
+
   const handleHistorialFormChange = (e) => {
     setHistorialForm({ ...historialForm, [e.target.name]: e.target.value });
   };
@@ -168,21 +253,17 @@ export default function Pacientes() {
     setPacienteForm({ ...pacienteForm, [e.target.name]: e.target.value });
   };
 
-  const abrirHistorial = (paciente) => {
-    setSelectedPaciente(paciente);
-    setShowHistorialForm(true);
-    setHistorialForm({
-      fecha: new Date().toISOString().split('T')[0], 
-      diagnostico: '', tratamiento: '', medicamentos: '', observaciones: '', proximaCita: ''
-    });
-  };
-
   const totalPacientes = pacientes.length;
   const pacientesActivos = pacientes.filter(p => p.Estado === 'Activo').length;
   const pacientesInactivos = pacientes.filter(p => p.Estado === 'Inactivo').length;
-  const hoyStr = new Date().toISOString().split('T')[0];
-  const consultasHoy = pacientes.filter(p => p.UltimaConsulta && p.UltimaConsulta.split('T')[0] === hoyStr).length;
 
+  const tieneHistorialCargado = historialCargado && historialCargado.ID; 
+  const modalTitle = tieneHistorialCargado 
+      ? (cargandoHistorial ? "Cargando Historial..." : "Ver / Editar Historial Clínico") 
+      : "Agregar Nuevo Historial Clínico";
+  const saveButtonText = tieneHistorialCargado ? "Actualizar Historial" : "Guardar Nuevo Registro";
+
+  
   return (
     <>
       <Header />
@@ -216,10 +297,6 @@ export default function Pacientes() {
             <div className="pacientes-stat-card inactivos">
               <div className="pacientes-stat-number">{pacientesInactivos}</div>
               <div className="pacientes-stat-label">INACTIVOS</div>
-            </div>
-            <div className="pacientes-stat-card consultas">
-              <div className="pacientes-stat-number">{consultasHoy}</div>
-              <div className="pacientes-stat-label">CONSULTAS HOY</div>
             </div>
           </div>
 
@@ -306,32 +383,53 @@ export default function Pacientes() {
                       </svg>
                       <span>{paciente.Direccion}</span>
                     </div>
-                    <div className="pacientes-info-row">
-                      <svg className="pacientes-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span>Última consulta: {formatearFecha(paciente.UltimaConsulta)}</span>
-                    </div>
+
                   </div>
-                  <div className="pacientes-card-actions">
-                    <button 
-                      className="pacientes-historial-btn"
-                      onClick={() => abrirHistorial(paciente)}
-                      disabled={paciente.Estado === 'Inactivo'}
-                    >
-                      <svg className="pacientes-btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      Agregar Historial
-                    </button>
+                  <div className="pacientes-card-actions" style={{ display: 'flex', gap: '8px' }}>
+                    
+                    {/* 1. 🆕 BOTÓN DE AGREGAR (Visible si NO tiene historial - SIMULADO) */}
+                    {!pacienteTieneHistorial(paciente) && (
+                        <button 
+                            className="pacientes-historial-btn add-new"
+                            onClick={() => abrirFormularioCreacion(paciente)}
+                            disabled={paciente.Estado === 'Inactivo'}
+                            style={{ flex: 1, backgroundColor: '#4CAF50' }}
+                        >
+                            <svg className="pacientes-btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Agregar Historial
+                        </button>
+                    )}
+
+                    {/* 2. 🆕 BOTÓN DE VER/EDITAR (Visible si SÍ tiene historial - SIMULADO) */}
+                    {pacienteTieneHistorial(paciente) && (
+                        <button 
+                            className="pacientes-historial-btn view-edit"
+                            onClick={() => abrirHistorialExistente(paciente)}
+                            disabled={paciente.Estado === 'Inactivo' || (cargandoHistorial && selectedPaciente?.ID === paciente.ID)}
+                            style={{ flex: 1, backgroundColor: '#007bff' }}
+                        >
+                            {cargandoHistorial && selectedPaciente?.ID === paciente.ID ? (
+                                <span>Cargando...</span>
+                            ) : (
+                                <>
+                                    <svg className="pacientes-btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Ver Historial
+                                </>
+                            )}
+                        </button>
+                    )}
+
                   </div>
                 </div>
               ))
             )}
           </div>
 
-          {/* ... Modales de Paciente y Historial (se mantiene el resto) ... */}
-          {/* Modal para Agregar Paciente */}
+          {/* Modal para Agregar Paciente (Sin cambios) */}
           {showPacienteForm && (
             <div className="pacientes-modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowPacienteForm(false)}>
               <div className="pacientes-modal-form">
@@ -450,70 +548,110 @@ export default function Pacientes() {
             </div>
           )}
 
-          {/* Modal para Historial Clínico */}
+          {/* Modal para Historial Clínico - Lógica de Carga/Visualización */}
           {showHistorialForm && selectedPaciente && (
             <div className="pacientes-modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowHistorialForm(false)}>
-              <div className="pacientes-modal-form">
+              <div className="pacientes-modal-form large-modal-size">
                 <div className="pacientes-modal-header">
                   <h2 className="pacientes-modal-title">
                     <svg className="pacientes-modal-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    Historial Clínico - {selectedPaciente.Nombre}
+                    {modalTitle} - {selectedPaciente.Nombre}
                   </h2>
                   <button 
                     className="pacientes-modal-close"
-                    onClick={() => { setShowHistorialForm(false); setSelectedPaciente(null); }}
+                    onClick={() => { setShowHistorialForm(false); setSelectedPaciente(null); setHistorialCargado(null); }}
                   >
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
                 </div>
-                <div className="pacientes-patient-info">
-                  <div className="pacientes-patient-details">
-                    <span className="pacientes-detail-item"><strong>Edad:</strong> {calcularEdad(selectedPaciente.FechaNacimiento)} años</span>
-                    <span className="pacientes-detail-item"><strong>Género:</strong> {selectedPaciente.Genero === 1 ? 'Masculino' : 'Femenino'}</span>
-                    <span className="pacientes-detail-item"><strong>Contacto:</strong> {selectedPaciente.Celular}</span>
-                  </div>
-                </div>
-                <form onSubmit={handleHistorialSubmit}>
-                  <div className="pacientes-form-grid">
-                    <div className="pacientes-form-group">
-                      <label className="pacientes-form-label"><svg className="pacientes-label-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>Fecha de Consulta *</label>
-                      <input className="pacientes-form-input" type="date" name="fecha" value={historialForm.fecha} onChange={handleHistorialFormChange} required />
-                    </div>
-                    <div className="pacientes-form-group">
-                      <label className="pacientes-form-label"><svg className="pacientes-label-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>Próxima Cita</label>
-                      <input className="pacientes-form-input" type="date" name="proximaCita" value={historialForm.proximaCita} onChange={handleHistorialFormChange} />
-                    </div>
-                    <div className="pacientes-form-group full-width">
-                      <label className="pacientes-form-label"><svg className="pacientes-label-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>Diagnóstico *</label>
-                      <textarea className="pacientes-form-textarea" name="diagnostico" value={historialForm.diagnostico} onChange={handleHistorialFormChange} placeholder="Descripción detallada del diagnóstico..." rows="4" required/>
-                    </div>
-                    <div className="pacientes-form-group full-width">
-                      <label className="pacientes-form-label"><svg className="pacientes-label-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>Tratamiento</label>
-                      <textarea className="pacientes-form-textarea" name="tratamiento" value={historialForm.tratamiento} onChange={handleHistorialFormChange} placeholder="Descripción del tratamiento indicado..." rows="4"/>
-                    </div>
-                    <div className="pacientes-form-group full-width">
-                      <label className="pacientes-form-label"><svg className="pacientes-label-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>Medicamentos</label>
-                      <textarea className="pacientes-form-textarea" name="medicamentos" value={historialForm.medicamentos} onChange={handleHistorialFormChange} placeholder="Lista de medicamentos prescritos con dosis y frecuencia..." rows="4"/>
-                    </div>
-                    <div className="pacientes-form-group full-width">
-                      <label className="pacientes-form-label"><svg className="pacientes-label-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>Observaciones</label>
-                      <textarea className="pacientes-form-textarea" name="observaciones" value={historialForm.observaciones} onChange={handleHistorialFormChange} placeholder="Observaciones adicionales, síntomas, evolución del paciente..." rows="4"/>
-                    </div>
-                  </div>
-                  <div className="pacientes-form-buttons">
-                    <button type="button" className="pacientes-cancel-button" onClick={() => { setShowHistorialForm(false); setSelectedPaciente(null); }}>Cancelar</button>
-                    <button type="submit" className="pacientes-save-button">
-                      <svg className="pacientes-btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      Guardar Historial
-                    </button>
-                  </div>
-                </form>
+
+                {cargandoHistorial ? (
+                    <div className="pacientes-loading" style={{ padding: '2rem', textAlign: 'center' }}>Cargando datos del historial...</div>
+                ) : (
+                    <>
+                        <div className="pacientes-patient-info">
+                            <div className="pacientes-patient-details">
+                                <span className="pacientes-detail-item"><strong>Edad:</strong> {calcularEdad(selectedPaciente.FechaNacimiento)} años</span>
+                                <span className="pacientes-detail-item"><strong>Género:</strong> {selectedPaciente.Genero === 1 ? 'Masculino' : 'Femenino'}</span>
+                            </div>
+                        </div>
+                        
+                        <form onSubmit={handleHistorialSubmit}>
+                            
+                            <div className="pacientes-form-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                                
+                                <div className="pacientes-form-group">
+                                    <label className="pacientes-form-label">Presión Arterial</label>
+                                    <input className="pacientes-form-input" type="text" name="presionArterial" value={historialForm.presionArterial} onChange={handleHistorialFormChange} placeholder="Ej. 120/80 mmHg" />
+                                </div>
+                                <div className="pacientes-form-group">
+                                    <label className="pacientes-form-label">Glucosa (mg/dL)</label>
+                                    <input className="pacientes-form-input" type="number" name="glucosa" value={historialForm.glucosa} onChange={handleHistorialFormChange} placeholder="Ej. 90" />
+                                </div>
+                                <div className="pacientes-form-group">
+                                    <label className="pacientes-form-label">Peso (kg)</label>
+                                    <input className="pacientes-form-input" type="number" step="0.1" name="peso" value={historialForm.peso} onChange={handleHistorialFormChange} placeholder="Ej. 75.5" />
+                                </div>
+                                <div className="pacientes-form-group">
+                                    <label className="pacientes-form-label">Altura (m)</label>
+                                    <input className="pacientes-form-input" type="number" step="0.01" name="altura" value={historialForm.altura} onChange={handleHistorialFormChange} placeholder="Ej. 1.70" />
+                                </div>
+                                <div className="pacientes-form-group">
+                                    <label className="pacientes-form-label">Temperatura (°C)</label>
+                                    <input className="pacientes-form-input" type="number" step="0.1" name="temperatura" value={historialForm.temperatura} onChange={handleHistorialFormChange} placeholder="Ej. 36.5" />
+                                </div>
+
+                                <div className="pacientes-form-group">
+                                    <label className="pacientes-form-label">Lugar de Origen</label>
+                                    <input className="pacientes-form-input" type="text" name="origen" value={historialForm.origen} onChange={handleHistorialFormChange} placeholder="Ej. Ciudad de México" />
+                                </div>
+                                <div className="pacientes-form-group">
+                                    <label className="pacientes-form-label">Lugar de Residencia</label>
+                                    <input className="pacientes-form-input" type="text" name="residencia" value={historialForm.residencia} onChange={handleHistorialFormChange} placeholder="Ej. Guadalajara" />
+                                </div>
+                                <div className="pacientes-form-group">
+                                    <label className="pacientes-form-label">Nacionalidad</label>
+                                    <input className="pacientes-form-input" type="text" name="nacionalidad" value={historialForm.nacionalidad} onChange={handleHistorialFormChange} placeholder="Ej. Mexicana" />
+                                </div>
+                                
+                                <div className="pacientes-form-group full-width">
+                                    <label className="pacientes-form-label">Enfermedades/Condiciones Actuales</label>
+                                    <textarea className="pacientes-form-textarea" name="Enfermedades" value={historialForm.Enfermedades} onChange={handleHistorialFormChange} placeholder="Listado de enfermedades o condiciones actuales del paciente..." rows="3"/>
+                                </div>
+
+                                <div className="pacientes-form-group full-width">
+                                    <label className="pacientes-form-label">Antecedentes Patológicos Familiares/Personales</label>
+                                    <textarea className="pacientes-form-textarea" name="antecedentesPatologicos" value={historialForm.antecedentesPatologicos} onChange={handleHistorialFormChange} placeholder="Antecedentes de relevancia médica (cirugías, alergias, enfermedades familiares, etc.)..." rows="4"/>
+                                </div>
+                                
+                                {selectedPaciente.Genero === 2 && (
+                                    <div className="pacientes-form-group full-width">
+                                        <label className="pacientes-form-label">Antecedentes Ginecológicos/Obstétricos</label>
+                                        <textarea className="pacientes-form-textarea" name="antecedentesGinecologicos" value={historialForm.antecedentesGinecologicos} onChange={handleHistorialFormChange} placeholder="Información ginecológica relevante (Menarca, G, P, A, C, FUM, etc.)..." rows="3"/>
+                                    </div>
+                                )}
+
+                                <div className="pacientes-form-group full-width">
+                                    <label className="pacientes-form-label"><svg className="pacientes-label-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>Hallazgos Clínicos / Nota Médica *</label>
+                                    <textarea className="pacientes-form-textarea" name="hallazgosClinicos" value={historialForm.hallazgosClinicos} onChange={handleHistorialFormChange} placeholder="Descripción de la exploración física, síntomas encontrados y conclusión..." rows="6" required/>
+                                </div>
+                            </div>
+                            <div className="pacientes-form-buttons">
+                                <button type="button" className="pacientes-cancel-button" onClick={() => { setShowHistorialForm(false); setSelectedPaciente(null); setHistorialCargado(null); }}>Cancelar</button>
+                                <button type="submit" className="pacientes-save-button">
+                                    <svg className="pacientes-btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    {saveButtonText}
+                                </button>
+                            </div>
+                        </form>
+                    </>
+                )}
               </div>
             </div>
           )}
