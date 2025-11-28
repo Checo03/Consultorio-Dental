@@ -5,6 +5,7 @@ import pacientesRoutes from './routes/pacientes.routes.js';
 import citasRoutes from './routes/citas.routes.js';
 import historialRoutes from './routes/historial.routes.js';
 import tratamientoRoutes from './routes/tratamiento.routes.js';
+import ticketRoutes from './routes/ticket.routes.js';
 
 const app = express();
 
@@ -16,5 +17,6 @@ app.use('/api', pacientesRoutes);
 app.use('/api', citasRoutes);
 app.use('/api', historialRoutes);
 app.use('/api', tratamientoRoutes);
+app.use('/api', ticketRoutes);
 
 export default app;

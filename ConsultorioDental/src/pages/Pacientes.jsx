@@ -165,11 +165,8 @@ export default function Pacientes() {
   };
 
   const pacienteTieneHistorial = (paciente) => {
-    // 1. Fallback seguro
     if (!paciente) return false; 
     
-    // 2. Usamos la propiedad que debe venir del backend
-    // Si 'TieneHistorial' es 1, 1 es true. Si es 0 o null, es false.
     return paciente.TieneHistorial; 
 };
 
@@ -429,7 +426,7 @@ export default function Pacientes() {
             )}
           </div>
 
-          {/* Modal para Agregar Paciente (Sin cambios) */}
+          {/* Modal para Agregar Paciente */}
           {showPacienteForm && (
             <div className="pacientes-modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowPacienteForm(false)}>
               <div className="pacientes-modal-form">
@@ -510,6 +507,18 @@ export default function Pacientes() {
                         value={pacienteForm.correo} 
                         onChange={handlePacienteFormChange}
                         placeholder="Ej. juan.perez@email.com"
+                        required 
+                      />
+                    </div>
+                    <div className="pacientes-form-group full-width">
+                      <label className="pacientes-form-label">Contraseña *</label>
+                      <input 
+                        className="pacientes-form-input"
+                        type="password" 
+                        name="contrasena" 
+                        value={pacienteForm.contrasena} 
+                        onChange={handlePacienteFormChange}
+                        placeholder="Ingresa una contraseña segura"
                         required 
                       />
                     </div>

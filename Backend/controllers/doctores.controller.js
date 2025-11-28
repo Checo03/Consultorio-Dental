@@ -1,5 +1,5 @@
-// doctores.controller.js
 import { getConnection } from '../database/connection.js';
+import { createHash } from 'crypto';
 
 export const getDoctores = async (req, res) => {
     const pool = await getConnection();
@@ -7,14 +7,18 @@ export const getDoctores = async (req, res) => {
     res.json(result.recordset);
 };
 
+const generateMD5Hash = (text) => {
+    return createHash('md5').update(text).digest('hex');
+};
 export const loginDoctor = async (req, res) => {
     const { username, password } = req.body;
+    const hashedPasswordMD5 = generateMD5Hash(password);
 
     try {
         const pool = await getConnection();
         const result = await pool.request()
             .input("username", username)
-            .input("password", password)
+            .input("password", hashedPasswordMD5)
             .query("SELECT * FROM Doctores WHERE Correo = @username AND Contrasena = @password");
 
         if (result.recordset.length > 0) {
