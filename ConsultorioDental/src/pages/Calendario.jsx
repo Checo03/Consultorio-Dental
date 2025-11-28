@@ -26,7 +26,6 @@ export default function Calendario() {
     }
 
     if (!window.confirm(actionText)) {
-        // Si el usuario presiona "Cancelar" o cierra el diálogo, salir de la función
         return;
     }
     
@@ -114,7 +113,6 @@ export default function Calendario() {
     const min = minutes;
     const ampm = hour >= 12 ? 'PM' : 'AM';
     
-    // Conversión a formato de 12 horas
     hour = hour % 12;
     hour = hour ? hour : 12;
     
@@ -127,6 +125,7 @@ export default function Calendario() {
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
+
   const getCitasForDate = (date) => {
     const dateStr = formatDateForAPI(date);
     
@@ -134,6 +133,11 @@ export default function Calendario() {
         const citaDateStr = cita.Fecha.substring(0, 10);
         return citaDateStr === dateStr;
     });
+  };
+
+  const getProgrammedCitasForDate = (date) => {
+    const allCitas = getCitasForDate(date);
+    return allCitas.filter(cita => cita.Estado === 1);
   };
 
   const navigateMonth = (direction) => {
@@ -171,6 +175,7 @@ export default function Calendario() {
   
   const days = getDaysInMonth(currentDate);
   const today = new Date();
+  today.setHours(0, 0, 0, 0); 
   
   const citasProgramadas = citas.filter(c => c.Estado === 1).length; 
   const citasCompletadas = citas.filter(c => c.Estado === 2).length; 
@@ -222,6 +227,8 @@ export default function Calendario() {
     }
   };
 
+  const isPastDate = selectedDate ? (selectedDate.getTime() < today.getTime()) : false;
+  
   return (
     <div className="calendario-container">
       <Header />
@@ -269,7 +276,6 @@ export default function Calendario() {
         </div>
 
         <div className="calendario-layout">
-          {/* Navegación compacta del mes */}
           <div className="calendario-month-nav">
             <button 
               className="calendario-nav-btn"
@@ -293,7 +299,6 @@ export default function Calendario() {
           </div>
 
           <div className="calendario-content">
-            {/* Calendario principal - más grande */}
             <div className="calendario-grid-container">
               <div className="calendario-weekdays">
                 {daysOfWeek.map(day => (
@@ -305,14 +310,16 @@ export default function Calendario() {
 
               <div className="calendario-days">
                 {days.map((dayObj, index) => {
-                  const citasDelDia = getCitasForDate(dayObj.date);
+                  const citasProgramadasDelDia = getProgrammedCitasForDate(dayObj.date); 
+                  const todasLasCitasDelDia = getCitasForDate(dayObj.date); 
+                  
                   const isToday = dayObj.date.toDateString() === today.toDateString();
                   const isSelected = selectedDate && dayObj.date.toDateString() === selectedDate.toDateString();
 
                   return (
                     <div
                       key={index}
-                      className={`calendario-day ${!dayObj.isCurrentMonth ? 'other-month' : ''} ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${citasDelDia.length > 0 ? 'has-citas' : ''}`}
+                      className={`calendario-day ${!dayObj.isCurrentMonth ? 'other-month' : ''} ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${citasProgramadasDelDia.length > 0 ? 'has-citas' : ''}`} 
                       onClick={() => handleDateClick(dayObj)}
                     >
                       <span className="calendario-day-number">
@@ -320,20 +327,23 @@ export default function Calendario() {
                       </span>
                       
                       {/* Mostrar citas directamente en el día */}
-                      {citasDelDia.length > 0 && (
+                      {todasLasCitasDelDia.length > 0 && (
                         <div className="calendario-day-citas">
-                          {citasDelDia.slice(0, 3).map((cita, i) => (
-                            <div
-                              key={i}
-                              className={`calendario-cita-mini ${getEstadoClass(cita.Estado)} ${getPrioridadClass(cita.Prioridad)}`}
-                            >
-                              <span className="cita-hora">{formatTime(cita.Hora)}</span>
-                              <span className="cita-paciente">{cita.Paciente.split(' ')[0]}</span>
-                            </div>
-                          ))}
-                          {citasDelDia.length > 3 && (
-                            <div className="calendario-more-citas">
-                              +{citasDelDia.length - 3} más
+                          {todasLasCitasDelDia.length <= 2 ? (
+                            // Muestra detalle si hay 2 o menos citas
+                            todasLasCitasDelDia.map((cita, i) => (
+                              <div
+                                key={i}
+                                className={`calendario-cita-mini ${getEstadoClass(cita.Estado)} ${getPrioridadClass(cita.Prioridad)}`}
+                              >
+                                <span className="cita-hora">{formatTime(cita.Hora)}</span>
+                                <span className="cita-paciente">{cita.Paciente.split(' ')[0]}</span>
+                              </div>
+                            ))
+                          ) : (
+                            // Muestra solo el conteo si hay más de 2 citas
+                            <div className="calendario-cita-mini">
+                              {todasLasCitasDelDia.length} Citas
                             </div>
                           )}
                         </div>
@@ -360,6 +370,7 @@ export default function Calendario() {
                           <button 
                               className="add-cita-btn"
                               onClick={() => window.location.href = '/citas'}
+                              disabled={isPastDate} 
                           >
                               <svg className="calendario-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -412,10 +423,23 @@ export default function Calendario() {
                                         >
                                             Cancelar
                                         </button>
-                                    </div>
+                                      </div>
                                   </div>
                               );
                           })}
+
+                          <div className="add-cita-container">
+                              <button 
+                                  className="add-cita-btn"
+                                  onClick={() => window.location.href = '/citas'}
+                                  disabled={isPastDate} 
+                              >
+                                  <svg className="calendario-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                  </svg>
+                                  Agregar Cita
+                              </button>
+                          </div>
                       </div>
                   )}
               </div>
