@@ -1,0 +1,165 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  eslint-backend:
+    name: ESLint - Backend
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./Backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: Backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: |
+          if grep -q '"lint"' package.json; then
+            npm run lint
+          else
+            echo "No ESLint configuration found for Backend"
+            echo "Consider adding ESLint for better code quality"
+          fi
+        continue-on-error: true
+
+  eslint-frontend:
+    name: ESLint - Frontend
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./ConsultorioDental
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: ConsultorioDental/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+  prettier-check:
+    name: Prettier Format Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Check Prettier formatting
+        run: |
+          echo "Checking code formatting..."
+
+          # Check if prettier is available in either project
+          if [ -f "ConsultorioDental/package.json" ]; then
+            cd ConsultorioDental
+            if npm list prettier > /dev/null 2>&1 || npm list --depth=0 2>/dev/null | grep -q prettier; then
+              echo "Running Prettier check on Frontend..."
+              npx prettier --check "src/**/*.{js,jsx,ts,tsx,json,css,scss,md}"
+            else
+              echo "Prettier not configured in Frontend"
+              echo "Consider adding Prettier for consistent code formatting"
+            fi
+          fi
+        continue-on-error: true
+
+  security-audit-backend:
+    name: Security Audit - Backend
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./Backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: Backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: |
+          echo "Running security audit on Backend dependencies..."
+          npm audit --audit-level=moderate || echo "Vulnerabilities found - review and fix before production"
+        continue-on-error: true
+
+  security-audit-frontend:
+    name: Security Audit - Frontend
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./ConsultorioDental
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: ConsultorioDental/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: |
+          echo "Running security audit on Frontend dependencies..."
+          npm audit --audit-level=moderate || echo "Vulnerabilities found - review and fix before production"
+        continue-on-error: true
+
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
