@@ -1,8 +1,8 @@
 ================================================================================
-CONSULTORIO DENTAL - SISTEMA DE GESTION
+CONSULTORIO DENTAL - SISTEMA DE GESTIÓN
 ================================================================================
 
-DESCRIPCION DEL PROYECTO
+DESCRIPCIÓN DEL PROYECTO
 ================================================================================
 
 Sistema integral de gestión para consultorios dentales que proporciona 
@@ -167,7 +167,7 @@ Puertos Utilizados:
 Sistema Operativo:
 - Compatible con Windows, macOS y Linux
 
-INSTALACION Y CONFIGURACION
+INSTALACIÓN Y CONFIGURACIÓN
 ================================================================================
 
 1. Clonar el Repositorio
@@ -232,7 +232,7 @@ npm run build      # Genera build de producción
 npm run lint       # Ejecuta ESLint para análisis de código
 npm run preview    # Preview del build de producción
 
-CONFIGURACION DE GITHUB ACTIONS
+CONFIGURACIÓN DE GITHUB ACTIONS
 ================================================================================
 
 Para que los pipelines funcionen correctamente, es necesario configurar los
@@ -384,6 +384,6 @@ Documentación adicional:
 - GitHub Actions: https://docs.github.com/actions
 
 ================================================================================
-Version: 1.0.0
-Ultima actualizacion: Diciembre 2025
+Versión: 1.0.0
+Última actualización: Diciembre 2025
 ================================================================================
