@@ -1,0 +1,126 @@
+name: Code Quality
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  eslint-backend:
+    name: ESLint Analysis - Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: Backend/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./Backend
+        run: npm ci
+      
+      - name: Run ESLint
+        working-directory: ./Backend
+        run: |
+          if grep -q '"lint"' package.json; then
+            npm run lint
+          else
+            echo "No lint script found in Backend package.json"
+            echo "Skipping ESLint for Backend..."
+          fi
+        continue-on-error: true
+
+  eslint-frontend:
+    name: ESLint Analysis - Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: ConsultorioDental/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./ConsultorioDental
+        run: npm ci
+      
+      - name: Run ESLint
+        working-directory: ./ConsultorioDental
+        run: npm run lint
+
+  prettier-check:
+    name: Prettier Format Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Check Frontend formatting
+        working-directory: ./ConsultorioDental
+        run: |
+          npm ci
+          if grep -q '"format:check"' package.json || grep -q 'prettier' package.json; then
+            if grep -q '"format:check"' package.json; then
+              npm run format:check
+            else
+              npx prettier --check "src/**/*.{js,jsx,ts,tsx,css,json}"
+            fi
+          else
+            echo "Prettier not configured, skipping format check..."
+          fi
+        continue-on-error: true
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Audit Backend dependencies
+        working-directory: ./Backend
+        run: |
+          echo "Running npm audit for Backend..."
+          npm audit --audit-level=moderate || true
+      
+      - name: Audit Frontend dependencies
+        working-directory: ./ConsultorioDental
+        run: |
+          echo "Running npm audit for Frontend..."
+          npm audit --audit-level=moderate || true
+      
+      - name: Check for known vulnerabilities
+        run: |
+          echo "Security audit completed"
+          echo "Review the audit results above"
+          echo "Run 'npm audit fix' locally to address vulnerabilities"
