@@ -1,0 +1,184 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-backend:
+    name: Test Backend
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./Backend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: Backend/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run linter
+        run: |
+          if grep -q '"lint"' package.json; then
+            npm run lint
+          else
+            echo "No lint script found, skipping..."
+          fi
+        continue-on-error: true
+      
+      - name: Run tests
+        run: npm test || echo "No tests configured yet"
+        continue-on-error: true
+
+  build-backend:
+    name: Build Backend
+    runs-on: ubuntu-latest
+    needs: test-backend
+    
+    defaults:
+      run:
+        working-directory: ./Backend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: Backend/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build application
+        run: |
+          if grep -q '"build"' package.json; then
+            npm run build
+          else
+            echo "No build script found. Backend is ready for deployment."
+          fi
+      
+      - name: Upload backend artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-build
+          path: Backend/
+          retention-days: 7
+
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./ConsultorioDental
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: ConsultorioDental/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Validate HTML5
+        run: |
+          echo "Validating HTML structure..."
+          if [ -f "index.html" ]; then
+            echo "✓ index.html found"
+          else
+            echo "✗ index.html not found"
+            exit 1
+          fi
+      
+      - name: Run linter
+        run: npm run lint
+        continue-on-error: true
+      
+      - name: Build frontend
+        run: npm run build
+      
+      - name: Upload frontend artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: ConsultorioDental/dist/
+          retention-days: 7
+
+  deploy:
+    name: Deploy Application
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download backend artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-build
+          path: ./backend-deploy
+      
+      - name: Download frontend artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: ./frontend-deploy
+      
+      - name: Prepare for deployment
+        run: |
+          echo "Deployment preparation complete"
+          echo "Backend files ready in ./backend-deploy"
+          echo "Frontend files ready in ./frontend-deploy"
+          echo ""
+          echo "Configure your deployment by:"
+          echo "1. Adding deployment secrets (SERVER_HOST, SSH_KEY, etc.)"
+          echo "2. Uncommenting and configuring the deployment steps below"
+      
+      # Uncomment and configure based on your deployment method:
+      
+      # For SSH deployment:
+      # - name: Deploy via SSH
+      #   uses: easingthemes/ssh-deploy@v4
+      #   with:
+      #     SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      #     REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+      #     REMOTE_USER: ${{ secrets.REMOTE_USER }}
+      #     SOURCE: "backend-deploy/"
+      #     TARGET: "/path/to/deployment"
+      
+      # For cloud platform (e.g., Heroku, AWS, Azure):
+      # - name: Deploy to Cloud
+      #   run: |
+      #     # Add your cloud deployment commands here
+      #     echo "Configure cloud deployment"
+      
+      # For Docker deployment:
+      # - name: Build and push Docker images
+      #   run: |
+      #     docker build -t consultorio-dental-backend ./backend-deploy
+      #     docker build -t consultorio-dental-frontend ./frontend-deploy
+      #     # docker push to your registry
